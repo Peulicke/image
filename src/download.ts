@@ -1,3 +1,5 @@
+import JSZip from "jszip";
+
 const imageToBlob = (image: HTMLImageElement): Promise<Blob> =>
     new Promise((resolve, reject) => {
         const canvas = document.createElement("canvas");
@@ -25,4 +27,20 @@ const downloadBlob = (blob: Blob, fileName: string): void => {
 export const downloadImage = async (image: HTMLImageElement, fileName: string): Promise<void> => {
     const blob = await imageToBlob(image);
     downloadBlob(blob, fileName);
+};
+
+export type NamedImage = {
+    name: string;
+    image: HTMLImageElement;
+};
+
+export const downloadZip = async (images: NamedImage[], zipFileName: string) => {
+    const zip = new JSZip();
+    await Promise.all(
+        images.map(async ({ name, image }) => {
+            zip.file(`${name}.png`, await imageToBlob(image), { base64: true });
+        })
+    );
+    const content = await zip.generateAsync({ type: "blob" });
+    downloadBlob(content, `${zipFileName}.zip`);
 };
